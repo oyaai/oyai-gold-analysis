@@ -1,0 +1,32 @@
+name: Update Gold Price Website
+
+on:
+  schedule:
+    - cron: "0 2 * * *" # รันทุกวันเวลา 02:00 UTC (ประมาณ 09:00 น. เวลาไทย)
+  workflow_dispatch: # ปุ่มสำหรับกดรันเองแบบ Manual
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Gold Analysis
+        run: python main.py # ตรวจสอบว่าไฟล์หลักของคุณชื่อ main.py หรือไม่
+
+      - name: Commit and Push changes
+        run: |
+          git config --local user.email "oyahidden@gmail.com"
+          git config --local user.name "oyaai"
+          git add index.html
+          git commit -m "Auto-update gold price and news" || echo "No changes to commit"
+          git push
