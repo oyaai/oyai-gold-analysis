@@ -16,7 +16,7 @@ def get_thai_gold_price():
             # โครงสร้างปัจจุบันใช้ 'gold_bar' สำหรับทองคำแท่ง
             price_list = res.get('price', {})
             gold_data = price_list.get('gold_bar', {})
-            print(res)
+            # print(res)
             # ดึงราคาขาย (sell)
             raw_sell = gold_data.get('sell')
             
@@ -72,8 +72,15 @@ def get_gold_news():
 
 def analyze_sentiment(news_list):
     score = 0
-    positive_words = ['ขึ้น', 'พุ่ง', 'สูงสุด', 'หนุน', 'ลดดอกเบี้ย', 'สงคราม', 'กังวล']
-    negative_words = ['ร่วง', 'ดิ่ง', 'ลดลง', 'ต่ำสุด', 'แข็งค่า', 'เทขาย', 'ปกติ']
+    # เพิ่มคำเฉพาะเจาะจงของปี 2026 เช่น ภาษีนำเข้า (Tariff), นิวเคลียร์อิหร่าน
+    positive_words = [
+        'ขึ้น', 'พุ่ง', 'สูงสุด', 'หนุน', 'สงคราม', 'กังวล', 
+        'ภาษีนำเข้า', 'อิหร่าน', 'ตึงเครียด', 'ความไม่แน่นอน'
+    ]
+    negative_words = [
+        'ร่วง', 'ดิ่ง', 'ลดลง', 'ต่ำสุด', 'แข็งค่า', 'เทขาย', 
+        'ทำกำไร', 'ดอลลาร์แข็ง', 'ลดดอกเบี้ยช้าลง'
+    ]
 
     for news in news_list:
         for word in positive_words:
