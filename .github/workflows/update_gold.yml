@@ -5,6 +5,9 @@ on:
     - cron: "0/10 * * * *" # รันทุก 10 นาที (ประมาณ 09:00 น. เวลาไทย)
   workflow_dispatch: # ปุ่มสำหรับกดรันเองแบบ Manual
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,4 +32,4 @@ jobs:
           git config --local user.name "oyaai"
           git add index.html
           git commit -m "Auto-update gold price and news" || echo "No changes to commit"
-          git push
+          git push origin main
