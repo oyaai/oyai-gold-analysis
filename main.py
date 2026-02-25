@@ -115,13 +115,18 @@ def show_summary(price, news, score):
     print("="*50 + "\n")
 
 def save_to_html(price_info, news, score, recommendation, est_range):
+    # ดึงข้อมูล Spot และ THB มาโชว์ประกอบการตัดสินใจ
+    try:
+        spot_price, thb_rate = get_global_market_data()
+        spot_str = f"{spot_price:,.2f}"
+        thb_str = f"{thb_rate:,.2f}"
+    except:
+        spot_str, thb_str = "N/A", "N/A"
+
     current_sell = price_info['sell']
     
-    # คำนวณแนวรับแนวต้านแบบ Dynamic (อ้างอิงจากความผันผวนปัจจุบัน)
-    res2 = current_sell + 500
-    res1 = current_sell + 200
-    sup1 = current_sell - 150
-    sup2 = current_sell - 450
+    # คำนวณจุดชี้วัด
+    is_buy_zone = "✅ พร้อมเข้าซื้อ" if (spot_price >= 5170 if isinstance(spot_price, float) else False) else "⚠️ ชะลอการซื้อ"
 
     html_content = f"""
     <!DOCTYPE html>
@@ -129,67 +134,88 @@ def save_to_html(price_info, news, score, recommendation, est_range):
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Gold Trading Strategy Dashboard</title>
+        <title>Gold Day Trading Cockpit</title>
         <style>
-            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; max-width: 900px; margin: auto; padding: 20px; background: #1a1a1a; color: #e0e0e0; }}
-            .card {{ background: #2d2d2d; padding: 25px; border-radius: 15px; border-top: 5px solid #d4af37; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }}
-            h1 {{ color: #d4af37; text-align: center; margin-bottom: 30px; }}
-            .price-box {{ display: flex; justify-content: space-between; align-items: center; background: #3d3d3d; padding: 20px; border-radius: 10px; margin-bottom: 20px; }}
-            .price-val {{ font-size: 32px; font-weight: bold; color: #ffd700; }}
-            .strategy-table {{ width: 100%; border-collapse: collapse; margin: 20px 0; background: #333; }}
-            .strategy-table th, .strategy-table td {{ padding: 12px; border: 1px solid #444; text-align: center; }}
-            .strategy-table th {{ background: #d4af37; color: black; }}
-            .res-row {{ color: #ff6b6b; }} /* แนวต้านสีแดง */
-            .sup-row {{ color: #51cf66; }} /* แนวรับสีเขียว */
-            .recommendation {{ background: #3e4a59; padding: 20px; border-left: 10px solid #3498db; border-radius: 5px; font-size: 18px; }}
-            .news-section {{ margin-top: 20px; padding: 15px; background: #252525; border-radius: 10px; }}
-            li {{ margin-bottom: 8px; font-size: 14px; color: #bbb; }}
+            body {{ font-family: 'Inter', sans-serif; background: #0f172a; color: #f8fafc; max-width: 1000px; margin: auto; padding: 20px; }}
+            .container {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }}
+            .card {{ background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }}
+            .full-width {{ grid-column: span 2; }}
+            h1, h2, h3 {{ color: #fbbf24; margin-top: 0; }}
+            .price-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }}
+            .price-item {{ background: #334155; padding: 15px; border-radius: 8px; text-align: center; }}
+            .label {{ font-size: 12px; color: #94a3b8; text-transform: uppercase; }}
+            .value {{ font-size: 24px; font-weight: bold; color: #f1f5f9; }}
+            .session-box {{ border-left: 4px solid #fbbf24; padding-left: 15px; margin-bottom: 15px; }}
+            .session-time {{ font-weight: bold; color: #fbbf24; }}
+            .status-badge {{ display: inline-block; padding: 5px 15px; border-radius: 20px; background: #065f46; color: #34d399; font-weight: bold; }}
+            .warning {{ background: #7f1d1d; color: #fca5a5; }}
+            table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+            th, td {{ padding: 10px; text-align: left; border-bottom: 1px solid #334155; }}
+            @media (max-width: 768px) {{ .container {{ grid-template-columns: 1fr; }} .full-width {{ grid-column: span 1; }} }}
         </style>
     </head>
     <body>
-        <div class="card">
-            <h1>วิเคราะห์กลยุทธ์ทองคำรายวัน</h1>
-            
-            <div class="price-box">
-                <div>
-                    <div style="font-size: 14px; color: #aaa;">ราคาทองแท่งปัจจุบัน (สมาคมฯ)</div>
-                    <div class="price-val">{current_sell:,} <span style="font-size: 16px;">บาท</span></div>
+        <h1> Gold Day Trading Dashboard</h1>
+        
+        <div class="container">
+            <div class="card full-width">
+                <div class="price-grid">
+                    <div class="price-item">
+                        <div class="label">Gold Spot ($)</div>
+                        <div class="value">${spot_str}</div>
+                    </div>
+                    <div class="price-item">
+                        <div class="label">ค่าเงินบาท (USD/THB)</div>
+                        <div class="value">{thb_str}</div>
+                    </div>
+                    <div class="price-item">
+                        <div class="label">ทองแท่งสมาคม (บาท)</div>
+                        <div class="value">{current_sell:,}</div>
+                    </div>
                 </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 14px; color: #aaa;">อัปเดตล่าสุด</div>
-                    <div>{price_info['update']}</div>
+                <div style="text-align: center;">
+                    <span class="status-badge {'warning' if 'ชะลอ' in is_buy_zone else ''}">
+                        สถานะปัจจุบัน: {is_buy_zone} (เงื่อนไข $5,170)
+                    </span>
                 </div>
             </div>
 
-            <div class="recommendation">
-                <strong>กลยุทธ์วันนี้:</strong> {recommendation}<br>
-                <small>เป้าหมายราคา: {est_range} บาท</small>
+            <div class="card">
+                <h2>ตารางเทรดรายวัน</h2>
+                <div class="session-box">
+                    <div class="session-time">ช่วงเช้า (09:00 - 10:00)</div>
+                    <div>เฝ้าราคาเปิดสมาคมฯ หาก Spot < $5,180 <b>"ชะลอการซื้อ"</b></div>
+                </div>
+                <div class="session-box">
+                    <div class="session-time">ช่วงบ่าย (14:00 - 16:00)</div>
+                    <div>ติดตามข่าวฝั่งยุโรป หากดอลลาร์ (DXY) แข็งค่า ทองจะถูกกดดัน</div>
+                </div>
+                <div class="session-box" style="border-left-color: #ef4444;">
+                    <div class="session-time">ช่วงค่ำ (20:30 เป็นต้นไป) </div>
+                    <div><b>ตลาดสหรัฐฯ เปิด:</b> ช่วงวิ่งแรงที่สุด ติดตามข่าว Kevin Warsh และภาษีนำเข้าทรัมป์</div>
+                </div>
             </div>
 
-            <h3>ตารางแนวรับ-แนวต้านประจำวัน</h3>
-            <table class="strategy-table">
-                <thead>
-                    <tr>
-                        <th>ประเภท</th>
-                        <th>ราคาประมาณการ (บาท)</th>
-                        <th>คำแนะนำ</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="res-row"><td>แนวต้าน 2</td><td>{res2:,}</td><td>จุดขายทำกำไรหลัก</td></tr>
-                    <tr class="res-row"><td>แนวต้าน 1</td><td>{res1:,}</td><td>ระวังแรงเทขาย</td></tr>
-                    <tr style="background: #444;"><td><b>ราคาปัจจุบัน</b></td><td><b>{current_sell:,}</b></td><td>---</td></tr>
-                    <tr class="sup-row"><td>แนวรับ 1</td><td>{sup1:,}</td><td>เริ่มทยอยสะสม</td></tr>
-                    <tr class="sup-row"><td>แนวรับ 2</td><td>{sup2:,}</td><td>จุดซื้อสำคัญ (Must Buy)</td></tr>
-                </tbody>
-            </table>
+            <div class="card">
+                <h2> สรุปกลยุทธ์วันนี้</h2>
+                <p><b>มุมมอง:</b> {recommendation}</p>
+                <p><b>เป้าหมาย:</b> {est_range} บาท</p>
+                <hr style="border: 0; border-top: 1px solid #334155;">
+                <h3> จุดเข้า-ออก สำคัญ</h3>
+                <table>
+                    <tr style="color: #f87171;"><td>แนวต้านสำคัญ</td><td>{current_sell + 300:,}</td></tr>
+                    <tr style="color: #fbbf24;"><td>ราคาปัจจุบัน</td><td>{current_sell:,}</td></tr>
+                    <tr style="color: #4ade80;"><td>แนวรับไม้ที่ 1</td><td>{current_sell - 150:,}</td></tr>
+                    <tr style="color: #4ade80;"><td>แนวรับไม้ที่ 2</td><td>{current_sell - 400:,}</td></tr>
+                </table>
+            </div>
 
-            <div class="news-section">
-                <h3>📰 ข่าวสดและปัจจัยที่ต้องติดตาม</h3>
+            <div class="card full-width">
+                <h3> หัวข้อข่าวเด่นที่มีผลต่อราคา</h3>
                 <ul>
                     {" ".join([f"<li>{n}</li>" for n in news])}
                 </ul>
-                <p style="font-size: 12px; color: #666;">*หมายเหตุ: คำนวณแนวรับแนวต้านอัตโนมัติจากราคาปัจจุบันและความผันผวน 10 นาทีล่าสุด</p>
+                <p style="font-size: 11px; color: #64748b; text-align: right;">อัปเดตอัตโนมัติเมื่อ: {price_info['update']}</p>
             </div>
         </div>
     </body>
