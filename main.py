@@ -53,11 +53,25 @@ def get_thai_gold_price():
         return None
 
 def get_global_market_data():
+    
     tickers = ["GC=F", "THB=X"]
     data = yf.download(tickers, period="1d", interval="1m")
-    latest_spot = data['Close']['GC=F'].iloc[-1]
-    latest_thb = data['Close']['THB=X'].iloc[-1]
-    return latest_spot, latest_thb
+    
+    spot_series = data['Close']['GC=F'].dropna()
+    if not spot_series.empty:
+        latest_spot = spot_series.iloc[-1]
+    else:
+        backup_data = yf.Ticker("GC=F").history(period="1d")
+        latest_spot = backup_data['Close'].iloc[-1]
+
+    thb_series = data['Close']['THB=X'].dropna()
+    if not thb_series.empty:
+        latest_thb = thb_series.iloc[-1]
+    else:
+        backup_thb = yf.Ticker("THB=X").history(period="1d")
+        latest_thb = backup_thb['Close'].iloc[-1]
+        
+    return float(latest_spot), float(latest_thb)
 
 def get_gold_news():
     # RSS Feed ข่าวเศรษฐกิจภาษาไทยจาก Google News
