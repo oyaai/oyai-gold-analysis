@@ -1,8 +1,9 @@
 import requests
 import yfinance as yf
 import feedparser
+#import datetime
+import feedparser
 #from bs4 import BeautifulSoup
-
 
 def get_thai_gold_price():
     url = 'https://api.chnwt.dev/thai-gold-api/latest' 
@@ -13,19 +14,17 @@ def get_thai_gold_price():
         
         if data.get('status') == 'success':
             res = data.get('response', {})
-            # โครงสร้างปัจจุบันใช้ 'gold_bar' สำหรับทองคำแท่ง
+            
             price_list = res.get('price', {})
             gold_data = price_list.get('gold_bar', {})
             # print(res)
-            # ดึงราคาขาย (sell)
+            
             raw_sell = gold_data.get('sell')
             
-            # ตรวจสอบว่ามีค่าส่งมาหรือไม่
             if raw_sell is None:
                 print("DEBUG: ไม่พบคีย์ 'sell' ในข้อมูล")
                 return None
 
-            # กำจัดเครื่องหมายคอมม่า (,) และแปลงเป็นตัวเลข
             if isinstance(raw_sell, str):
                 raw_sell = raw_sell.replace(',', '')
             
@@ -84,6 +83,34 @@ def get_gold_news():
         news_list.append(entry.title)
     return news_list
 
+def get_realtime_news():
+    url = "https://www.investing.com/rss/news_95.rss" # ตัวอย่าง Feed ข่าวทองคำ
+    feed = feedparser.parse(url)
+    
+    news_items = []
+    # เอาแค่ 5 ข่าวล่าสุดที่สดใหม่จริงๆ
+    for entry in feed.entries[:5]:
+        news_items.append(entry.title)
+    
+    return news_items
+
+def get_short_trade_plan(spot_price, pivots):
+    if not pivots: return "รอยืนยันสัญญาณ"
+    
+    p = pivots['p']
+    r1 = pivots['r1']
+    s1 = pivots['s1']
+    
+    # วิเคราะห์หน้าเทรดสั้น (Short Trade Plan)
+    if spot_price > p:
+        plan = "📈 **หน้า Buy ได้เปรียบ**: เน้นย่อซื้อที่แนวรับแรก เพื่อไปขายที่แนวต้าน"
+    elif spot_price < p:
+        plan = "📉 **หน้า Sell ได้เปรียบ**: ราคายังอยู่ใต้จุดหมุน เน้นขายเมื่อเด้งทดสอบแนวต้าน"
+    else:
+        plan = "⏳ **Wait & See**: ราคาอยู่ที่จุดหมุน (Pivot) รอเลือกทาง"
+        
+    return plan
+
 def analyze_sentiment(news_list):
     score = 0
     # เพิ่มคำเฉพาะเจาะจงของปี 2026 เช่น ภาษีนำเข้า (Tariff), นิวเคลียร์อิหร่าน
@@ -128,115 +155,102 @@ def show_summary(price, news, score):
         print("คำแนะนำ: ซื้อสะสมตามแผนปกติ (ถัวเฉลี่ย)")
     print("="*50 + "\n")
 
-def save_to_html(price_info, news, score, recommendation, est_range):
-    # ดึงข้อมูล Spot และ THB มาโชว์ประกอบการตัดสินใจ
+def get_pivot_levels():
     try:
-        spot_price, thb_rate = get_global_market_data()
-        spot_str = f"{spot_price:,.2f}"
-        thb_str = f"{thb_rate:,.2f}"
-    except:
-        spot_str, thb_str = "N/A", "N/A"
-
-    current_sell = price_info['sell']
-    
-    # คำนวณจุดชี้วัด
-    is_buy_zone = "✅ พร้อมเข้าซื้อ" if (spot_price >= 5170 if isinstance(spot_price, float) else False) else "⚠️ ชะลอการซื้อ"
-
-    html_content = f"""
-    <!DOCTYPE html>
-    <html lang="th">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Gold Day Trading Cockpit</title>
-        <style>
-            body {{ font-family: 'Inter', sans-serif; background: #0f172a; color: #f8fafc; max-width: 1000px; margin: auto; padding: 20px; }}
-            .container {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }}
-            .card {{ background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }}
-            .full-width {{ grid-column: span 2; }}
-            h1, h2, h3 {{ color: #fbbf24; margin-top: 0; }}
-            .price-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }}
-            .price-item {{ background: #334155; padding: 15px; border-radius: 8px; text-align: center; }}
-            .label {{ font-size: 12px; color: #94a3b8; text-transform: uppercase; }}
-            .value {{ font-size: 24px; font-weight: bold; color: #f1f5f9; }}
-            .session-box {{ border-left: 4px solid #fbbf24; padding-left: 15px; margin-bottom: 15px; }}
-            .session-time {{ font-weight: bold; color: #fbbf24; }}
-            .status-badge {{ display: inline-block; padding: 5px 15px; border-radius: 20px; background: #065f46; color: #34d399; font-weight: bold; }}
-            .warning {{ background: #7f1d1d; color: #fca5a5; }}
-            table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
-            th, td {{ padding: 10px; text-align: left; border-bottom: 1px solid #334155; }}
-            @media (max-width: 768px) {{ .container {{ grid-template-columns: 1fr; }} .full-width {{ grid-column: span 1; }} }}
-        </style>
-    </head>
-    <body>
-        <h1> Gold Day Trading Dashboard</h1>
+        gold = yf.Ticker("GC=F")
+        hist = gold.history(period="5d") # ดึงเผื่อไว้กรณีติดวันหยุด
         
-        <div class="container">
-            <div class="card full-width">
-                <div class="price-grid">
-                    <div class="price-item">
-                        <div class="label">Gold Spot ($)</div>
-                        <div class="value">${spot_str}</div>
-                    </div>
-                    <div class="price-item">
-                        <div class="label">ค่าเงินบาท (USD/THB)</div>
-                        <div class="value">{thb_str}</div>
-                    </div>
-                    <div class="price-item">
-                        <div class="label">ทองแท่งสมาคม (บาท)</div>
-                        <div class="value">{current_sell:,}</div>
-                    </div>
-                </div>
-                <div style="text-align: center;">
-                    <span class="status-badge {'warning' if 'ชะลอ' in is_buy_zone else ''}">
-                        สถานะปัจจุบัน: {is_buy_zone} (เงื่อนไข $5,170)
-                    </span>
-                </div>
-            </div>
+        if len(hist) < 2:
+            return None
 
-            <div class="card">
-                <h2>ตารางเทรดรายวัน</h2>
-                <div class="session-box">
-                    <div class="session-time">ช่วงเช้า (09:00 - 10:00)</div>
-                    <div>เฝ้าราคาเปิดสมาคมฯ หาก Spot < $5,180 <b>"ชะลอการซื้อ"</b></div>
-                </div>
-                <div class="session-box">
-                    <div class="session-time">ช่วงบ่าย (14:00 - 16:00)</div>
-                    <div>ติดตามข่าวฝั่งยุโรป หากดอลลาร์ (DXY) แข็งค่า ทองจะถูกกดดัน</div>
-                </div>
-                <div class="session-box" style="border-left-color: #ef4444;">
-                    <div class="session-time">ช่วงค่ำ (20:30 เป็นต้นไป) </div>
-                    <div><b>ตลาดสหรัฐฯ เปิด:</b> ช่วงวิ่งแรงที่สุด ติดตามข่าว Kevin Warsh และภาษีนำเข้าทรัมป์</div>
-                </div>
-            </div>
+        # ดึงค่า High, Low, Close ของเมื่อวาน (แถวก่อนหน้าล่าสุด)
+        # ใช้ .item() เพื่อดึงเอาเฉพาะค่าตัวเลขออกมาจาก Series
+        high = float(hist['High'].iloc[-2])
+        low = float(hist['Low'].iloc[-2])
+        close = float(hist['Close'].iloc[-2])
+        
+        # สูตร Pivot Point Standard
+        pivot = (high + low + close) / 3
+        r1 = (2 * pivot) - low
+        r2 = pivot + (high - low)
+        s1 = (2 * pivot) - high
+        s2 = pivot - (high - low)
+        
+        return {
+            "p": pivot, "r1": r1, "r2": r2, "s1": s1, "s2": s2
+        }
+    except Exception as e:
+        print(f"DEBUG Pivot Error: {e}")
+        return None
 
-            <div class="card">
-                <h2> สรุปกลยุทธ์วันนี้</h2>
-                <p><b>มุมมอง:</b> {recommendation}</p>
-                <p><b>เป้าหมาย:</b> {est_range} บาท</p>
-                <hr style="border: 0; border-top: 1px solid #334155;">
-                <h3> จุดเข้า-ออก สำคัญ</h3>
-                <table>
-                    <tr style="color: #f87171;"><td>แนวต้านสำคัญ</td><td>{current_sell + 300:,}</td></tr>
-                    <tr style="color: #fbbf24;"><td>ราคาปัจจุบัน</td><td>{current_sell:,}</td></tr>
-                    <tr style="color: #4ade80;"><td>แนวรับไม้ที่ 1</td><td>{current_sell - 150:,}</td></tr>
-                    <tr style="color: #4ade80;"><td>แนวรับไม้ที่ 2</td><td>{current_sell - 400:,}</td></tr>
-                </table>
-            </div>
+def save_to_html(price_info, news, score, recommendation, est_range):
+    # 1. เตรียมข้อมูลพื้นฐาน
+    spot_price, thb_rate = get_global_market_data()
+    pivots = get_pivot_levels()
+    current_sell = price_info['sell']
 
-            <div class="card full-width">
-                <h3> หัวข้อข่าวเด่นที่มีผลต่อราคา</h3>
-                <ul>
-                    {" ".join([f"<li>{n}</li>" for n in news])}
-                </ul>
-                <p style="font-size: 11px; color: #64748b; text-align: right;">อัปเดตอัตโนมัติเมื่อ: {price_info['update']}</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
+    # ฟังก์ชันแปลงราคา: คำนวณส่วนต่างจาก Pivot Point เทียบกับ Spot ปัจจุบัน
+    # แล้วนำส่วนต่างนั้นมาบวก/ลบจากราคาทองไทยปัจจุบัน
+    def to_thai_rel(target_spot):
+        if not target_spot or not spot_price or spot_price == 0:
+            return current_sell
+        
+        # คำนวณว่า target_spot ต่างจาก spot ปัจจุบันกี่ %
+        diff_percent = (target_spot - spot_price) / spot_price
+        # นำ % นั้นมาปรับกับราคาทองไทย
+        thai_price = current_sell * (1 + diff_percent)
+        # ปัดเศษให้ลงท้ายด้วย 10 หรือ 50 ตามสไตล์ราคาสมาคมฯ
+        return int(round(thai_price / 50) * 50)
+
+    if pivots:
+        res2_val = f"{to_thai_rel(pivots['r2']):,}"
+        res1_val = f"{to_thai_rel(pivots['r1']):,}"
+        sup1_val = f"{to_thai_rel(pivots['s1']):,}"
+        sup2_val = f"{to_thai_rel(pivots['s2']):,}"
+    else:
+        # กรณีไม่มีข้อมูล ให้ใช้ค่าประมาณการจากราคาปัจจุบัน
+        res2_val, res1_val = f"{current_sell+500:,}", f"{current_sell+200:,}"
+        sup1_val, sup2_val = f"{current_sell-150:,}", f"{current_sell-450:,}"
+    
+    # 2. Logic ช่วงเวลา (now_hour)
+    import datetime
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    now_hour = (now_utc.hour + 7) % 24
+    
+    condition_price = 5180 if 9 <= now_hour < 12 else 5170
+    time_tag = "ช่วงเช้า ($5,180)" if 9 <= now_hour < 12 else "กลยุทธ์ปัจจุบัน ($5,170)"
+    
+    # 3. เตรียมตัวแปรสำหรับแสดงผล
+    is_buy = spot_price >= condition_price
+    buy_status = "✅ พร้อมเข้าซื้อ" if is_buy else "⚠️ ชะลอการซื้อ"
+    badge_class = "" if is_buy else "warning"
+
+    short_plan = get_short_trade_plan(spot_price, pivots)
+    real_news = get_realtime_news()
+    
+    # 4. อ่านไฟล์ Template
+    with open("template.html", "r", encoding="utf-8") as f:
+        html_content = f.read()
+
+    # 5. แทนที่ตัวแปรใน HTML (ใช้ชื่อที่เราตั้งไว้ในปีกกา { })
+    # ข้อควรระวัง: หากใน HTML มีปีกกาปกติของ CSS ให้ใช้ {{ }} เพื่อไม่ให้ Python งง
+    final_html = html_content.replace("{SPOT_PRICE}", f"{spot_price:,.2f}")\
+                             .replace("{THB_RATE}", f"{thb_rate:,.2f}")\
+                             .replace("{PRICE_SELL}", f"{price_info['sell']:,}")\
+                             .replace("{RES2}", res2_val)\
+                             .replace("{RES1}", res1_val)\
+                             .replace("{SUP1}", sup1_val)\
+                             .replace("{SUP2}", sup2_val)\
+                             .replace("{TIME_TAG}", time_tag)\
+                             .replace("{BUY_STATUS}", buy_status)\
+                             .replace("{BADGE_CLASS}", badge_class)\
+                             .replace("{UPDATE_TIME}", price_info['update'])\
+                             .replace("{SHORT_PLAN}", short_plan)\
+                             .replace("{NEWS_LIST}", "".join([f"<li>{n}</li>" for n in news]))
+
+    # 6. บันทึกเป็น index.html
     with open("index.html", "w", encoding="utf-8") as f:
-        f.write(html_content)
+        f.write(final_html)
 
 def main():
     print("ระบบกำลังรวบรวมข้อมูลและวิเคราะห์ข่าว... กรุณารอครู่เดียว")

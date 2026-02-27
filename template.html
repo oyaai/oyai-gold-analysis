@@ -122,11 +122,11 @@
     <div class="ticker-wrap">
       <div class="ticker">
         <div class="ticker-item">
-          GOLD SPOT: <span class="up">$5,253.80</span>
+          GOLD SPOT: <span class="up">${SPOT_PRICE}</span>
         </div>
-        <div class="ticker-item">USD/THB: <span>30.99</span></div>
-        <div class="ticker-item">STRATEGY: <span>กลยุทธ์ปัจจุบัน ($5,170)</span></div>
-        <div class="ticker-item">UPDATE: <span>27/02/2569 เวลา 17:22 น. (ครั้งที่ 16)</span></div>
+        <div class="ticker-item">USD/THB: <span>{THB_RATE}</span></div>
+        <div class="ticker-item">STRATEGY: <span>{TIME_TAG}</span></div>
+        <div class="ticker-item">UPDATE: <span>{UPDATE_TIME}</span></div>
       </div>
     </div>
 
@@ -136,20 +136,20 @@
         <div class="price-grid">
           <div class="price-item">
             <div>Gold Spot</div>
-            <div class="value">$5,253.80</div>
+            <div class="value">${SPOT_PRICE}</div>
           </div>
           <div class="price-item">
             <div>บาท/ดอลลาร์</div>
-            <div class="value">30.99</div>
+            <div class="value">{THB_RATE}</div>
           </div>
           <div class="price-item">
             <div>ทองสมาคม (ขาย)</div>
-            <div class="value">76,150</div>
+            <div class="value">{PRICE_SELL}</div>
           </div>
         </div>
         <div style="text-align: center">
-          <div style="margin-bottom: 10px">กลยุทธ์: กลยุทธ์ปัจจุบัน ($5,170)</div>
-          <span class="status-badge ">สถานะ: ✅ พร้อมเข้าซื้อ</span>
+          <div style="margin-bottom: 10px">กลยุทธ์: {TIME_TAG}</div>
+          <span class="status-badge {BADGE_CLASS}">สถานะ: {BUY_STATUS}</span>
         </div>
       </div>
 
@@ -163,23 +163,23 @@
         <table>
           <tr style="color: #f87171">
             <td>แนวต้าน 2</td>
-            <td>75,800</td>
+            <td>{RES2}</td>
           </tr>
           <tr style="color: #f87171">
             <td>แนวต้าน 1</td>
-            <td>75,400</td>
+            <td>{RES1}</td>
           </tr>
           <tr style="background: #334155">
             <td>ราคาปัจจุบัน</td>
-            <td>76,150</td>
+            <td>{PRICE_SELL}</td>
           </tr>
           <tr style="color: #4ade80">
             <td>แนวรับ 1</td>
-            <td>74,600</td>
+            <td>{SUP1}</td>
           </tr>
           <tr style="color: #4ade80">
             <td>แนวรับ 2</td>
-            <td>74,200</td>
+            <td>{SUP2}</td>
           </tr>
         </table>
       </div>
@@ -187,7 +187,7 @@
       <div class="card">
         <h3>📰 ปัจจัยที่ต้องติดตาม</h3>
         <ul>
-          <li>ทองพุ่งไม่พัก! ราคาทองวันนี้ 27 ก.พ. 69 รูปพรรณทะลุ 77,150 บาท สมาคมค้าทองคำประกาศล่าสุด - สยามรัฐ</li><li>ราคาทองคำวันนี้ 27 ก.พ. 2569 ปรับขึ้นต่อเนื่อง บ่ายโมง แตะขายออก 78,964 บาท ทองรูปพรรณทะลุ 76,200 บาท - สยามรัฐ</li><li>ราคาทองก่อนปิดตลาดเย็นนี้ 27 ก.พ. 69 สงครามปากีฯ-อัฟกัน กระทบราคาแค่ไหน? - Thaiger</li><li>เปิดคำทำนายสุดช็อก! เกี่ยวกับ "ราคาทองคำ" ในปี 2026 โดยหมอดูตาบอดชื่อดัง - Sanook.com</li><li>ราคาทองคำโลก พุ่งขึ้น รับเศรษฐกิจสหรัฐอ่อนแอ ภาษีใหม่ของทรัมป์ - bangkokbiznews</li>
+          {NEWS_LIST}
         </ul>
       </div>
     </div>
@@ -198,7 +198,7 @@
       <h3 style="margin-bottom: 5px; color: #fbbf24">
         ⚡ Short Trade Plan (รายวัน)
       </h3>
-      <div style="font-size: 18px; line-height: 1.6">📈 **หน้า Buy ได้เปรียบ**: เน้นย่อซื้อที่แนวรับแรก เพื่อไปขายที่แนวต้าน</div>
+      <div style="font-size: 18px; line-height: 1.6">{SHORT_PLAN}</div>
     </div>
     <div
       class="card full-width"
