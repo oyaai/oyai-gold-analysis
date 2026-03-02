@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gold Day Trading Cockpit</title>
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background: #0f172a;
+        color: #f8fafc;
+        max-width: 1200px;
+        margin: auto;
+        padding: 0;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+      input,
+      textarea {
+        -webkit-user-select: text;
+        user-select: text;
+      }
+      .ticker-wrap {
+        width: 100%;
+        overflow: hidden;
+        background: #1e293b;
+        padding: 10px 0;
+        border-bottom: 2px solid #fbbf24;
+      }
+      .ticker {
+        display: inline-block;
+        white-space: nowrap;
+        animation: ticker 40s linear infinite;
+      }
+      @keyframes ticker {
+        0% {
+          transform: translateX(100%);
+        }
+        100% {
+          transform: translateX(-100%);
+        }
+      }
+      .ticker-item {
+        display: inline-block;
+        padding: 0 30px;
+        font-weight: bold;
+      }
+      .up {
+        color: #4ade80;
+      }
+
+      .container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        padding: 20px;
+      }
+      .card {
+        background: #1e293b;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #334155;
+      }
+      .full-width {
+        grid-column: span 2;
+      }
+      h1 {
+        color: #fbbf24;
+        text-align: center;
+      }
+
+      .price-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      .price-item {
+        background: #334155;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+      }
+      .value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #f1f5f9;
+      }
+
+      .status-badge {
+        display: inline-block;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-weight: bold;
+        background: #065f46;
+        color: #34d399;
+      }
+      .status-badge.warning {
+        background: #7f1d1d;
+        color: #fca5a5;
+      }
+
+      .chart-container {
+        height: 500px;
+        margin-top: 15px;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      td {
+        padding: 10px;
+        border-bottom: 1px solid #334155;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="ticker-wrap">
+      <div class="ticker">
+        <div class="ticker-item">
+          GOLD SPOT: <span class="up">$5,359.20</span>
+        </div>
+        <div class="ticker-item">USD/THB: <span>31.22</span></div>
+        <div class="ticker-item">STRATEGY: <span>ช่วงเช้า ($5,180)</span></div>
+        <div class="ticker-item">UPDATE: <span>02/03/2569 เวลา 09:45 น. (ครั้งที่ 7)</span></div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="card full-width">
+        <h1>🏆 Gold Trading Cockpit</h1>
+        <div class="price-grid">
+          <div class="price-item">
+            <div>Gold Spot</div>
+            <div class="value">$5,359.20</div>
+          </div>
+          <div class="price-item">
+            <div>บาท/ดอลลาร์</div>
+            <div class="value">31.22</div>
+          </div>
+          <div class="price-item">
+            <div>ทองสมาคม (ขาย)</div>
+            <div class="value">79,250</div>
+          </div>
+        </div>
+        <div style="text-align: center">
+          <div style="margin-bottom: 10px">กลยุทธ์: ช่วงเช้า ($5,180)</div>
+          <span class="status-badge ">สถานะ: ✅ พร้อมเข้าซื้อ</span>
+        </div>
+      </div>
+
+      <div class="card full-width">
+        <h3>📈 Live Movement (Real-time Chart)</h3>
+        <div class="chart-container" id="tradingview_gold"></div>
+      </div>
+
+      <div class="card">
+        <h3>🎯 แนวรับ-แนวต้าน (Pivot)</h3>
+        <table>
+          <tr style="color: #f87171">
+            <td>แนวต้าน 2</td>
+            <td>78,850</td>
+          </tr>
+          <tr style="color: #f87171">
+            <td>แนวต้าน 1</td>
+            <td>78,100</td>
+          </tr>
+          <tr style="background: #334155">
+            <td>ราคาปัจจุบัน</td>
+            <td>79,250</td>
+          </tr>
+          <tr style="color: #4ade80">
+            <td>แนวรับ 1</td>
+            <td>76,550</td>
+          </tr>
+          <tr style="color: #4ade80">
+            <td>แนวรับ 2</td>
+            <td>75,800</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>📰 ปัจจัยที่ต้องติดตาม</h3>
+        <ul>
+          <li>ราคาทองวันนี้ 2 มี.ค. 2569 เปิดตลาดเช้าวันจันทร์ จับตาศึกตะวันออกกลางระอุ กระทบทองคำโลก - Thaiger</li><li>เล่งหงษ์ ประเมินราคาทองสัปดาห์นี้ "แกว่งตัวขาขึ้นกรอบแคบ" ให้แนวต้าน 80,000 บาท - ข่าวสด</li><li>ทองพุ่งไม่พัก! ราคาทองวันนี้ 27 ก.พ. 69 รูปพรรณทะลุ 77,150 บาท สมาคมค้าทองคำประกาศล่าสุด - สยามรัฐ</li><li>ราคาทองคำแท่ง SJC พุ่งสูงขึ้นท่ามกลางแนวโน้มเศรษฐกิจปี 2026 - Vietnam.vn</li><li>ราคาทองคำวันนี้ 28 ก.พ. 2569 เปิดตลาดพุ่งขึ้น 1,450 รูปพรรณขายออก 78,400 บาท - TrueID</li>
+        </ul>
+      </div>
+    </div>
+    <div
+      class="card full-width"
+      style="border-left: 10px solid #fbbf24; background: #2d3748"
+    >
+      <h3 style="margin-bottom: 5px; color: #fbbf24">
+        ⚡ Short Trade Plan (รายวัน)
+      </h3>
+      <div style="font-size: 18px; line-height: 1.6">📈 **หน้า Buy ได้เปรียบ**: เน้นย่อซื้อที่แนวรับแรก เพื่อไปขายที่แนวต้าน</div>
+    </div>
+    <div
+      class="card full-width"
+      style="text-align: center; margin-top: 30px; border-style: dashed"
+    >
+      <p>☕ ร่วมสนับสนุนผู้พัฒนา เพื่อการอัปเดตระบบที่ดียิ่งขึ้น</p>
+      <button
+        onclick="showDonation()"
+        style="
+          background: #fbbf24;
+          color: #000;
+          border: none;
+          padding: 10px 25px;
+          border-radius: 8px;
+          font-weight: bold;
+          cursor: pointer;
+        "
+      >
+        Donate via PromptPay
+      </button>
+    </div>
+
+    <div
+      id="donationModal"
+      style="
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <div
+        style="
+          background: #fff;
+          padding: 20px;
+          border-radius: 15px;
+          text-align: center;
+          max-width: 300px;
+          position: relative;
+        "
+      >
+        <span
+          onclick="closeDonation()"
+          style="
+            position: absolute;
+            right: 15px;
+            top: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #333;
+          "
+          >&times;</span
+        >
+        <h3 style="color: #333; margin-top: 10px">Support Developer</h3>
+        <img
+          src="https://i.postimg.cc/KY1xvMxQ/S-171040770.jpg"
+          alt="PromptPay QR Code"
+          style="width: 100%; border-radius: 10px; margin: 10px 0"
+        />
+        <p style="color: #666; font-size: 12px">
+          สแกนผ่านแอปฯ ธนาคารได้ทุกสาขา
+        </p>
+      </div>
+      <script>
+        function showDonation() {
+          document.getElementById("donationModal").style.display = "flex";
+        }
+        function closeDonation() {
+          document.getElementById("donationModal").style.display = "none";
+        }
+        // ปิดเมื่อคลิกพื้นที่ด้านนอก
+        window.onclick = function (event) {
+          let modal = document.getElementById("donationModal");
+          if (event.target == modal) {
+            modal.style.display = "none";
+          }
+        };
+      </script>
+    </div>
+
+    <script
+      type="text/javascript"
+      src="https://s3.tradingview.com/tv.js"
+    ></script>
+    <script type="text/javascript">
+      new TradingView.widget({
+        width: "100%",
+        height: "500",
+        symbol: "OANDA:XAUUSD",
+        interval: "15",
+        timezone: "Asia/Bangkok",
+        theme: "dark",
+        style: "1",
+        locale: "th",
+        container_id: "tradingview_gold",
+      });
+    </script>
+    <script>
+      // ป้องกันการคลิกขวา
+      document.addEventListener("contextmenu", (event) =>
+        event.preventDefault(),
+      );
+
+      // ป้องกันปุ่มลัด (F12, Ctrl+Shift+I, Ctrl+U)
+      document.onkeydown = function (e) {
+        if (
+          e.keyCode == 123 ||
+          (e.ctrlKey && e.shiftKey && e.keyCode == "I".charCodeAt(0)) ||
+          (e.ctrlKey && e.shiftKey && e.keyCode == "C".charCodeAt(0)) ||
+          (e.ctrlKey && e.shiftKey && e.keyCode == "J".charCodeAt(0)) ||
+          (e.ctrlKey && e.keyCode == "U".charCodeAt(0))
+        ) {
+          return false;
+        }
+      };
+    </script>
+  </body>
+</html>

@@ -158,16 +158,17 @@ def show_summary(price, news, score):
 def get_pivot_levels():
     try:
         gold = yf.Ticker("GC=F")
-        hist = gold.history(period="5d") # ดึงเผื่อไว้กรณีติดวันหยุด
+        # ดึง 3 วันล่าสุดแบบรายวัน เพื่อหา 'เมื่อวาน' ที่มีข้อมูลการซื้อขายจริง
+        hist = gold.history(period="3d", interval="1d")
         
         if len(hist) < 2:
             return None
 
-        # ดึงค่า High, Low, Close ของเมื่อวาน (แถวก่อนหน้าล่าสุด)
-        # ใช้ .item() เพื่อดึงเอาเฉพาะค่าตัวเลขออกมาจาก Series
-        high = float(hist['High'].iloc[-2])
-        low = float(hist['Low'].iloc[-2])
-        close = float(hist['Close'].iloc[-2])
+        # เลือกแถวก่อนหน้าล่าสุด (วันทำการล่าสุดที่ปิดแท่งไปแล้ว)
+        prev_day = hist.iloc[-2]
+        high = float(prev_day['High'])
+        low = float(prev_day['Low'])
+        close = float(prev_day['Close'])
         
         # สูตร Pivot Point Standard
         pivot = (high + low + close) / 3
@@ -176,30 +177,31 @@ def get_pivot_levels():
         s1 = (2 * pivot) - high
         s2 = pivot - (high - low)
         
-        return {
-            "p": pivot, "r1": r1, "r2": r2, "s1": s1, "s2": s2
-        }
+        return {"p": pivot, "r1": r1, "r2": r2, "s1": s1, "s2": s2}
     except Exception as e:
         print(f"DEBUG Pivot Error: {e}")
         return None
-
+    
 def save_to_html(price_info, news, score, recommendation, est_range):
     # 1. เตรียมข้อมูลพื้นฐาน
     spot_price, thb_rate = get_global_market_data()
     pivots = get_pivot_levels()
     current_sell = price_info['sell']
 
-    # ฟังก์ชันแปลงราคา: คำนวณส่วนต่างจาก Pivot Point เทียบกับ Spot ปัจจุบัน
-    # แล้วนำส่วนต่างนั้นมาบวก/ลบจากราคาทองไทยปัจจุบัน
-    def to_thai_rel(target_spot):
-        if not target_spot or not spot_price or spot_price == 0:
+    def to_thai_rel(target_spot_level):
+        if not target_spot_level or not spot_price or spot_price == 0:
             return current_sell
         
-        # คำนวณว่า target_spot ต่างจาก spot ปัจจุบันกี่ %
-        diff_percent = (target_spot - spot_price) / spot_price
-        # นำ % นั้นมาปรับกับราคาทองไทย
-        thai_price = current_sell * (1 + diff_percent)
-        # ปัดเศษให้ลงท้ายด้วย 10 หรือ 50 ตามสไตล์ราคาสมาคมฯ
+        # 1. หาผลต่างระหว่าง "แนวรับแนวต้าน (Spot)" กับ "ราคา Spot ปัจจุบัน"
+        diff_usd = target_spot_level - spot_price
+        
+        # 2. แปลงผลต่าง USD เป็นเงินบาทไทย 
+        # สูตร: (Diff USD * 32.48 / 31.104) * 0.965 * THB_Rate 
+        # หรือใช้วิธีเทียบสัดส่วน (Ratio) ซึ่งง่ายและแม่นยำกว่าในกรณีนี้:
+        ratio = target_spot_level / spot_price
+        thai_price = current_sell * ratio
+        
+        # 3. ปัดเศษให้ลง 10 หรือ 50 บาท
         return int(round(thai_price / 50) * 50)
 
     if pivots:
@@ -231,6 +233,8 @@ def save_to_html(price_info, news, score, recommendation, est_range):
     # 4. อ่านไฟล์ Template
     with open("template.html", "r", encoding="utf-8") as f:
         html_content = f.read()
+
+    print(res1_val, res2_val, sup1_val, sup2_val)
 
     # 5. แทนที่ตัวแปรใน HTML (ใช้ชื่อที่เราตั้งไว้ในปีกกา { })
     # ข้อควรระวัง: หากใน HTML มีปีกกาปกติของ CSS ให้ใช้ {{ }} เพื่อไม่ให้ Python งง
